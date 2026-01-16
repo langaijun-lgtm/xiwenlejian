@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: xiwenlejian
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - VITE_APP_TITLE=喜闻乐见
+      - VITE_APP_LOGO=/logo.png
+    depends_on:
+      - db
+    networks:
+      - xiwenlejian-network
+
+  db:
+    image: mysql:8.0
+    container_name: xiwenlejian-db
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=xiwenlejian
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - xiwenlejian-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: xiwenlejian-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+    networks:
+      - xiwenlejian-network
+
+volumes:
+  mysql-data:
+
+networks:
+  xiwenlejian-network:
+    driver: bridge
