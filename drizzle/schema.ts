@@ -132,3 +132,62 @@ export const chatMessages = mysqlTable("chatMessages", {
 
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertChatMessage = typeof chatMessages.$inferInsert;
+
+/**
+ * Expense rules table - defines automatic approval rules for fixed expenses
+ */
+export const expenseRules = mysqlTable("expense_rules", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").notNull(),
+  name: text("name").notNull(), // Rule name, e.g., "Daily meals"
+  category: varchar("category", { length: 50 }).notNull(), // Expense category
+  frequency: mysqlEnum("frequency", ["daily", "weekly", "monthly", "seasonal", "yearly"]).notNull(),
+  maxAmount: int("max_amount").notNull(), // Maximum amount per occurrence
+  description: text("description"), // Rule description
+  isActive: int("is_active").default(1).notNull(), // 1 = active, 0 = inactive
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ExpenseRule = typeof expenseRules.$inferSelect;
+export type InsertExpenseRule = typeof expenseRules.$inferInsert;
+
+/**
+ * Payment reminders table - tracks bills and optimal payment timing
+ */
+export const paymentReminders = mysqlTable("payment_reminders", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").notNull(),
+  name: text("name").notNull(), // Bill name, e.g., "Rent", "Utilities"
+  category: varchar("category", { length: 50 }).notNull(),
+  amount: int("amount").notNull(),
+  dueDate: timestamp("due_date").notNull(), // Original due date
+  optimalPaymentDate: timestamp("optimal_payment_date").notNull(), // Suggested payment date
+  recurrence: mysqlEnum("recurrence", ["once", "monthly", "quarterly", "yearly"]).notNull(),
+  notes: text("notes"), // e.g., "Pay on credit card billing date + 1"
+  isPaid: int("is_paid").default(0).notNull(), // 0 = unpaid, 1 = paid
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PaymentReminder = typeof paymentReminders.$inferSelect;
+export type InsertPaymentReminder = typeof paymentReminders.$inferInsert;
+
+/**
+ * Assets table - tracks user's owned items and their replacement cycles
+ */
+export const assets = mysqlTable("assets", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").notNull(),
+  name: text("name").notNull(), // Asset name, e.g., "iPhone 13"
+  category: varchar("category", { length: 50 }).notNull(), // e.g., "手机", "电脑", "家电"
+  purchasePrice: int("purchase_price").notNull(), // Purchase price in cents
+  purchaseDate: timestamp("purchase_date").notNull(),
+  expectedLifespan: int("expected_lifespan").notNull(), // In months
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Asset = typeof assets.$inferSelect;
+export type InsertAsset = typeof assets.$inferInsert;

@@ -6,6 +6,7 @@ import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { Streamdown } from "streamdown";
 import VoiceInput from "@/components/VoiceInput";
+import ExpenseAnalyzer from "@/components/ExpenseAnalyzer";
 import { Link } from "wouter";
 
 export default function Consult() {
@@ -80,6 +81,13 @@ export default function Consult() {
 
   return (
     <div className="space-y-6 pb-20 md:pb-8">
+      {/* Quick Analyzer */}
+      <ExpenseAnalyzer 
+        onAnalysisComplete={(text) => {
+          setInput(text);
+        }}
+      />
+      
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold organic-heading text-foreground">消费咨询</h1>

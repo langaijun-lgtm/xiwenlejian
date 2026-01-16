@@ -1,6 +1,6 @@
 import { eq, and, desc, gte, lte, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, goals, categories, expenses, insights, InsertGoal, InsertCategory, InsertExpense, InsertInsight, userProfiles, InsertUserProfile, chatMessages, InsertChatMessage } from "../drizzle/schema";
+import { InsertUser, users, goals, categories, expenses, insights, InsertGoal, InsertCategory, InsertExpense, InsertInsight, userProfiles, InsertUserProfile, chatMessages, InsertChatMessage, expenseRules, InsertExpenseRule, paymentReminders, InsertPaymentReminder, assets, InsertAsset } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -284,4 +284,104 @@ export async function clearChatMessages(userId: number, type?: string) {
   } else {
     return db.delete(chatMessages).where(eq(chatMessages.userId, userId));
   }
+}
+
+// Expense Rules
+export async function getExpenseRules(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(expenseRules).where(eq(expenseRules.userId, userId));
+}
+
+export async function createExpenseRule(rule: InsertExpenseRule) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(expenseRules).values(rule);
+  return result;
+}
+
+export async function updateExpenseRule(id: number, userId: number, data: Partial<InsertExpenseRule>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(expenseRules).set(data).where(and(eq(expenseRules.id, id), eq(expenseRules.userId, userId)));
+}
+
+export async function deleteExpenseRule(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(expenseRules).where(and(eq(expenseRules.id, id), eq(expenseRules.userId, userId)));
+}
+
+// Payment Reminders
+export async function getPaymentReminders(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(paymentReminders).where(eq(paymentReminders.userId, userId));
+}
+
+export async function getUpcomingPaymentReminders(userId: number, daysAhead: number = 7) {
+  const db = await getDb();
+  if (!db) return [];
+  const now = new Date();
+  const future = new Date();
+  future.setDate(future.getDate() + daysAhead);
+  return db.select().from(paymentReminders).where(
+    and(
+      eq(paymentReminders.userId, userId),
+      eq(paymentReminders.isPaid, 0),
+      gte(paymentReminders.optimalPaymentDate, now),
+      lte(paymentReminders.optimalPaymentDate, future)
+    )
+  );
+}
+
+export async function createPaymentReminder(reminder: InsertPaymentReminder) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(paymentReminders).values(reminder);
+  return result;
+}
+
+export async function updatePaymentReminder(id: number, userId: number, data: Partial<InsertPaymentReminder>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(paymentReminders).set(data).where(and(eq(paymentReminders.id, id), eq(paymentReminders.userId, userId)));
+}
+
+export async function markPaymentAsPaid(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(paymentReminders).set({ isPaid: 1 }).where(and(eq(paymentReminders.id, id), eq(paymentReminders.userId, userId)));
+}
+
+export async function deletePaymentReminder(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(paymentReminders).where(and(eq(paymentReminders.id, id), eq(paymentReminders.userId, userId)));
+}
+
+// Assets Management
+export async function getUserAssets(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(assets).where(eq(assets.userId, userId)).orderBy(desc(assets.purchaseDate));
+}
+
+export async function createAsset(asset: InsertAsset) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(assets).values(asset);
+  return result;
+}
+
+export async function updateAsset(id: number, userId: number, data: Partial<InsertAsset>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(assets).set(data).where(and(eq(assets.id, id), eq(assets.userId, userId)));
+}
+
+export async function deleteAsset(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(assets).where(and(eq(assets.id, id), eq(assets.userId, userId)));
 }

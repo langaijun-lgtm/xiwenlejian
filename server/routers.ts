@@ -6,6 +6,8 @@ import { z } from "zod";
 import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
 import { transcribeAudio } from "./_core/voiceTranscription";
+import { evaluateExpense, initializeDefaultRules } from "./expenseRuleEngine";
+import { analyzeExpense, checkAssetReplacement, getDefaultLifespan } from "./expenseAnalyzer";
 
 export const appRouter = router({
   system: systemRouter,
@@ -159,6 +161,84 @@ export const appRouter = router({
       const content = response.choices[0]?.message?.content || "暂时无法生成建议，请稍后再试。";
       
       return { content };
+    }),
+  }),
+
+  expenseRules: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return db.getExpenseRules(ctx.user.id);
+    }),
+    create: protectedProcedure.input(z.object({
+      name: z.string(),
+      category: z.string(),
+      frequency: z.enum(["daily", "weekly", "monthly", "seasonal", "yearly"]),
+      maxAmount: z.number(),
+      description: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      return db.createExpenseRule({
+        userId: ctx.user.id,
+        ...input,
+        isActive: 1,
+      });
+    }),
+    initializeDefaults: protectedProcedure.mutation(async ({ ctx }) => {
+      await initializeDefaultRules(ctx.user.id);
+      return { success: true };
+    }),
+  }),
+
+  paymentReminders: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return db.getPaymentReminders(ctx.user.id);
+    }),
+    upcoming: protectedProcedure.query(async ({ ctx }) => {
+      return db.getUpcomingPaymentReminders(ctx.user.id, 7);
+    }),
+    create: protectedProcedure.input(z.object({
+      name: z.string(),
+      category: z.string(),
+      amount: z.number(),
+      dueDate: z.date(),
+      optimalPaymentDate: z.date(),
+      recurrence: z.enum(["once", "monthly", "quarterly", "yearly"]),
+      notes: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      return db.createPaymentReminder({
+        userId: ctx.user.id,
+        ...input,
+        isPaid: 0,
+      });
+    }),
+    markPaid: protectedProcedure.input(z.object({
+      id: z.number(),
+    })).mutation(async ({ ctx, input }) => {
+      return db.markPaymentAsPaid(input.id, ctx.user.id);
+    }),
+  }),
+
+  assets: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return db.getUserAssets(ctx.user.id);
+    }),
+    create: protectedProcedure.input(z.object({
+      name: z.string(),
+      category: z.string(),
+      purchasePrice: z.number(),
+      purchaseDate: z.date(),
+      expectedLifespan: z.number().optional(),
+      notes: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const lifespan = input.expectedLifespan || getDefaultLifespan(input.category);
+      return db.createAsset({
+        userId: ctx.user.id,
+        ...input,
+        expectedLifespan: lifespan,
+      });
+    }),
+    checkReplacement: protectedProcedure.input(z.object({
+      category: z.string(),
+    })).query(async ({ ctx, input }) => {
+      return checkAssetReplacement(ctx.user.id, input.category);
     }),
   }),
 
