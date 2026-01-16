@@ -101,7 +101,7 @@ export default function Home() {
             <p className="text-sm text-muted-foreground">{latestInsight.content}</p>
             <Button asChild variant="outline" size="sm" className="rounded-full">
               <Link href="/insights">
-                <a>查看更多建议</a>
+                查看更多建议
               </Link>
             </Button>
           </CardContent>
@@ -113,11 +113,9 @@ export default function Home() {
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold organic-heading text-foreground">目标进度</h2>
           <Button asChild size="sm" className="rounded-full">
-            <Link href="/goals">
-              <a className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                新建目标
-              </a>
+            <Link href="/goals" className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              新建目标
             </Link>
           </Button>
         </div>
@@ -135,7 +133,7 @@ export default function Home() {
               <p className="text-muted-foreground">还没有设定目标</p>
               <Button asChild variant="outline" className="rounded-full">
                 <Link href="/goals">
-                  <a>创建第一个目标</a>
+                  创建第一个目标
                 </Link>
               </Button>
             </CardContent>

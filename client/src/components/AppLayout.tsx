@@ -69,27 +69,25 @@ export default function AppLayout({ children }: AppLayoutProps) {
       <header className="sticky top-0 z-50 w-full border-b border-border glass">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-8">
-            <Link href="/">
-              <a className="text-2xl font-bold organic-heading text-foreground hover:text-primary transition-colors">
-                喜闻乐见
-              </a>
+            <Link href="/" className="text-2xl font-bold organic-heading text-foreground hover:text-primary transition-colors">
+              喜闻乐见
             </Link>
             <nav className="hidden md:flex items-center gap-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location === item.path;
                 return (
-                  <Link key={item.path} href={item.path}>
-                    <a
-                      className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                        isActive
-                          ? "bg-primary text-primary-foreground"
-                          : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                      }`}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {item.label}
-                    </a>
+                  <Link
+                    key={item.path}
+                    href={item.path}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                      isActive
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.label}
                   </Link>
                 );
               })}
@@ -137,17 +135,17 @@ export default function AppLayout({ children }: AppLayoutProps) {
             const Icon = item.icon;
             const isActive = location === item.path;
             return (
-              <Link key={item.path} href={item.path}>
-                <a
-                  className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors ${
-                    isActive
-                      ? "text-primary"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  <Icon className="h-5 w-5" />
-                  <span className="text-xs font-medium">{item.label}</span>
-                </a>
+              <Link
+                key={item.path}
+                href={item.path}
+                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors ${
+                  isActive
+                    ? "text-primary"
+                    : "text-muted-foreground"
+                }`}
+              >
+                <Icon className="h-5 w-5" />
+                <span className="text-xs font-medium">{item.label}</span>
               </Link>
             );
           })}
