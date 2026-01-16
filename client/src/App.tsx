@@ -6,6 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import AppLayout from "./components/AppLayout";
 import Home from "./pages/Home";
+import Login from "./pages/Login";
 import Goals from "./pages/Goals";
 import Expenses from "./pages/Expenses";
 import Stats from "./pages/Stats";
@@ -51,6 +52,8 @@ function Router() {
           <Consult />
         </AppLayout>
       </Route>
+      <Route path={"/"} component={Home} />
+      <Route path={"/login"} component={Login} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

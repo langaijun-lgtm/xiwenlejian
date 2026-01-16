@@ -8,6 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { uploadMiddleware, handleTranscribe } from "../transcribeHandler";
+import { wechatAuthStart, wechatAuthCallback, alipayAuthStart, alipayAuthCallback } from "../thirdPartyAuthHandler";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -38,6 +39,11 @@ async function startServer() {
   registerOAuthRoutes(app);
   // Voice transcription API
   app.post("/api/transcribe", uploadMiddleware, handleTranscribe);
+  // Third-party OAuth routes
+  app.get("/api/auth/wechat", wechatAuthStart);
+  app.get("/api/auth/wechat/callback", wechatAuthCallback);
+  app.get("/api/auth/alipay", alipayAuthStart);
+  app.get("/api/auth/alipay/callback", alipayAuthCallback);
   // tRPC API
   app.use(
     "/api/trpc",
