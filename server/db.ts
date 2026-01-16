@@ -1,11 +1,10 @@
-import { eq } from "drizzle-orm";
+import { eq, and, desc, gte, lte, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, goals, categories, expenses, insights, InsertGoal, InsertCategory, InsertExpense, InsertInsight } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
@@ -89,4 +88,138 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// Goals queries
+export async function getUserGoals(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(goals).where(eq(goals.userId, userId)).orderBy(desc(goals.createdAt));
+}
+
+export async function createGoal(goal: InsertGoal) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(goals).values(goal);
+  return result;
+}
+
+export async function updateGoal(id: number, userId: number, updates: Partial<InsertGoal>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(goals).set(updates).where(and(eq(goals.id, id), eq(goals.userId, userId)));
+}
+
+export async function deleteGoal(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.delete(goals).where(and(eq(goals.id, id), eq(goals.userId, userId)));
+}
+
+// Categories queries
+export async function getUserCategories(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(categories).where(
+    sql`${categories.userId} = ${userId} OR ${categories.isDefault} = 1`
+  ).orderBy(desc(categories.isDefault), desc(categories.createdAt));
+}
+
+export async function createCategory(category: InsertCategory) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.insert(categories).values(category);
+}
+
+export async function deleteCategory(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.delete(categories).where(and(eq(categories.id, id), eq(categories.userId, userId)));
+}
+
+// Expenses queries
+export async function getUserExpenses(userId: number, startDate?: Date, endDate?: Date) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  let conditions = [eq(expenses.userId, userId)];
+  if (startDate) conditions.push(gte(expenses.date, startDate));
+  if (endDate) conditions.push(lte(expenses.date, endDate));
+  
+  return db.select().from(expenses).where(and(...conditions)).orderBy(desc(expenses.date));
+}
+
+export async function createExpense(expense: InsertExpense) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.insert(expenses).values(expense);
+}
+
+export async function updateExpense(id: number, userId: number, updates: Partial<InsertExpense>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(expenses).set(updates).where(and(eq(expenses.id, id), eq(expenses.userId, userId)));
+}
+
+export async function deleteExpense(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.delete(expenses).where(and(eq(expenses.id, id), eq(expenses.userId, userId)));
+}
+
+// Insights queries
+export async function getUserInsights(userId: number, limit: number = 10) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(insights).where(eq(insights.userId, userId)).orderBy(desc(insights.createdAt)).limit(limit);
+}
+
+export async function createInsight(insight: InsertInsight) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.insert(insights).values(insight);
+}
+
+export async function markInsightAsRead(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.update(insights).set({ isRead: 1 }).where(and(eq(insights.id, id), eq(insights.userId, userId)));
+}
+
+// Statistics queries
+export async function getExpenseStats(userId: number, startDate: Date, endDate: Date) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select({
+    total: sql<string>`COALESCE(SUM(${expenses.amount}), 0)`,
+    count: sql<number>`COUNT(*)`,
+  }).from(expenses).where(
+    and(
+      eq(expenses.userId, userId),
+      gte(expenses.date, startDate),
+      lte(expenses.date, endDate)
+    )
+  );
+  
+  return result[0];
+}
+
+export async function getExpensesByCategory(userId: number, startDate: Date, endDate: Date) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select({
+    categoryId: expenses.categoryId,
+    categoryName: categories.name,
+    total: sql<string>`SUM(${expenses.amount})`,
+    count: sql<number>`COUNT(*)`,
+  }).from(expenses)
+    .leftJoin(categories, eq(expenses.categoryId, categories.id))
+    .where(
+      and(
+        eq(expenses.userId, userId),
+        gte(expenses.date, startDate),
+        lte(expenses.date, endDate)
+      )
+    )
+    .groupBy(expenses.categoryId, categories.name);
+}
