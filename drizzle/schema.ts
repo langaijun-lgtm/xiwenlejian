@@ -88,3 +88,47 @@ export const insights = mysqlTable("insights", {
 
 export type Insight = typeof insights.$inferSelect;
 export type InsertInsight = typeof insights.$inferInsert;
+
+/**
+ * User profile table - stores detailed user financial background
+ */
+export const userProfiles = mysqlTable("userProfiles", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  // Geographic info
+  country: varchar("country", { length: 100 }),
+  province: varchar("province", { length: 100 }),
+  city: varchar("city", { length: 100 }),
+  // Identity
+  identity: mysqlEnum("identity", ["student", "employee", "entrepreneur", "other"]),
+  // Goals and aspirations
+  goals: text("goals"),
+  // Income structure (JSON)
+  incomeStructure: text("incomeStructure"),
+  // Expense structure (JSON)
+  expenseStructure: text("expenseStructure"),
+  // Existing assets (JSON)
+  existingAssets: text("existingAssets"),
+  // Profile completion status
+  isComplete: int("isComplete").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type UserProfile = typeof userProfiles.$inferSelect;
+export type InsertUserProfile = typeof userProfiles.$inferInsert;
+
+/**
+ * Chat messages table - stores conversation history
+ */
+export const chatMessages = mysqlTable("chatMessages", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  role: mysqlEnum("role", ["user", "assistant", "system"]).notNull(),
+  content: text("content").notNull(),
+  type: mysqlEnum("type", ["profile_setup", "expense_consult", "general"]).default("general").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ChatMessage = typeof chatMessages.$inferSelect;
+export type InsertChatMessage = typeof chatMessages.$inferInsert;

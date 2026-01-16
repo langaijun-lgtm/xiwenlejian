@@ -1,6 +1,6 @@
 import { eq, and, desc, gte, lte, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, goals, categories, expenses, insights, InsertGoal, InsertCategory, InsertExpense, InsertInsight } from "../drizzle/schema";
+import { InsertUser, users, goals, categories, expenses, insights, InsertGoal, InsertCategory, InsertExpense, InsertInsight, userProfiles, InsertUserProfile, chatMessages, InsertChatMessage } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -222,4 +222,66 @@ export async function getExpensesByCategory(userId: number, startDate: Date, end
       )
     )
     .groupBy(expenses.categoryId, categories.name);
+}
+
+// User Profile queries
+export async function getUserProfile(userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select().from(userProfiles).where(eq(userProfiles.userId, userId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function upsertUserProfile(profile: InsertUserProfile) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const existing = await getUserProfile(profile.userId);
+  
+  if (existing) {
+    return db.update(userProfiles)
+      .set(profile)
+      .where(eq(userProfiles.userId, profile.userId));
+  } else {
+    return db.insert(userProfiles).values(profile);
+  }
+}
+
+// Chat Messages queries
+export async function getChatMessages(userId: number, type?: string, limit: number = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  let conditions = [eq(chatMessages.userId, userId)];
+  if (type) {
+    conditions.push(eq(chatMessages.type, type as any));
+  }
+  
+  return db.select().from(chatMessages)
+    .where(and(...conditions))
+    .orderBy(desc(chatMessages.createdAt))
+    .limit(limit);
+}
+
+export async function createChatMessage(message: InsertChatMessage) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.insert(chatMessages).values(message);
+}
+
+export async function clearChatMessages(userId: number, type?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  if (type) {
+    return db.delete(chatMessages).where(
+      and(
+        eq(chatMessages.userId, userId),
+        eq(chatMessages.type, type as any)
+      )
+    );
+  } else {
+    return db.delete(chatMessages).where(eq(chatMessages.userId, userId));
+  }
 }

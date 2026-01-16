@@ -10,6 +10,8 @@ import Goals from "./pages/Goals";
 import Expenses from "./pages/Expenses";
 import Stats from "./pages/Stats";
 import Insights from "./pages/Insights";
+import Profile from "./pages/Profile";
+import Consult from "./pages/Consult";
 
 function Router() {
   return (
@@ -37,6 +39,16 @@ function Router() {
       <Route path={"/insights"}>
         <AppLayout>
           <Insights />
+        </AppLayout>
+      </Route>
+      <Route path={"/profile"}>
+        <AppLayout>
+          <Profile />
+        </AppLayout>
+      </Route>
+      <Route path={"/consult"}>
+        <AppLayout>
+          <Consult />
         </AppLayout>
       </Route>
       <Route path={"/404"} component={NotFound} />

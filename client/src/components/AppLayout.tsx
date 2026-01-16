@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Home, Target, Receipt, PieChart, Sparkles, LogOut, Loader2 } from "lucide-react";
+import { Home, Target, Receipt, PieChart, Sparkles, LogOut, User as UserIcon, MessageCircle, Loader2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -60,7 +60,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     { path: "/goals", icon: Target, label: "目标" },
     { path: "/expenses", icon: Receipt, label: "消费" },
     { path: "/stats", icon: PieChart, label: "统计" },
-    { path: "/insights", icon: Sparkles, label: "AI助手" },
+    { path: "/consult", icon: MessageCircle, label: "咨询" },
   ];
 
   return (
